@@ -47,7 +47,7 @@ app.route('GET', '/favicon.ico', favicon)
 
 Up to you, but in case you don't know about these things, I recommend using nginx on a Linux/Unix system. Set up a reverse proxy in nginx to pass requests on to whatever port you configured your app to listen on (Google can tell you how). Then use systemctl to start the app as a service. I.e. create a `my-web-app.service` file in `/etc/systemd/system/` with the following content:
 
-```toml
+```
 [Unit]
 Description=My Web App
 After=network.target
