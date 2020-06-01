@@ -16,10 +16,8 @@ export class App {
   }
   env: 'dev'|'prod' = 'prod'
 
-  errorHandler: ErrorHandler = function (error: Error|HttpError): Response {
-    const status = (error as HttpError).status || 500
-    const response = new Response(status, 'text/plain', error.message)
-    return response
+  errorHandler: ErrorHandler = function (error: HttpError): Response {
+    return new Response(error.status, 'text/plain', error.message)
   }
 
   async listen (port: number) {
@@ -51,7 +49,7 @@ export class App {
   }
 
   route (method: HttpMethod, pattern: string, handler: Handler) {
-    this.routes[method].push({
+    this.routes[method].unshift({
       pattern: new RegExp(`^${pattern.replace(/\//g, '\/')}$`),
       handler: handler
     })
@@ -70,6 +68,13 @@ export class App {
 
     return null
   }
+}
+
+/** Pipes n functions (intended for use in chaining functions to make a handler). */
+export function pipe (...fns: any): Handler {
+  return function (x: Request) {
+    fns.reduce((y: any, f: any) => f(y), x)
+  } as Handler
 }
 
 /** A record of routes grouped by HTTP method. */
