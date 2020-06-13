@@ -7,6 +7,7 @@ Deno.test({
     assertEquals(typeof mod.App, 'function')
     assertEquals(typeof mod.HttpError, 'function')
     assertEquals(typeof mod.Request, 'function')
+    assertEquals(typeof mod.mockRequest, 'function')
     assertEquals(typeof mod.Response, 'function')
     assertEquals(typeof mod.OkResponse, 'function')
     assertEquals(typeof mod.HtmlResponse, 'function')

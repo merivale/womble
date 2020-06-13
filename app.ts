@@ -1,90 +1,47 @@
-import { serve, ServerRequest, Status } from './deps.ts'
+import { serve, Status } from './deps.ts'
 import { HttpError } from './http_error.ts'
-import { Request, HttpMethod } from './request.ts'
+import { Request } from './request.ts'
 import { Response } from './response.ts'
 
-/** A basic Deno web server. */
+/** A request handler. */
+export type Handler = (request: Request) => Response|Promise<Response>
+
+/** An error handler. */
+export type ErrorHandler = (error: HttpError) => Response|Promise<Response>
+
+/** A simple web application framework for Deno. */
 export class App {
-  routes: Routes = {
-    DELETE: [],
-    GET: [],
-    HEAD: [],
-    OPTIONS: [],
-    PATCH: [],
-    POST: [],
-    PUT: []
+  handler: Handler = function (request: Request): Response {
+    return new Response(Status.OK, 'text/plain', `Womble is responding to the request for ${request.path}.`)
   }
-  env: 'dev'|'prod' = 'prod'
 
   errorHandler: ErrorHandler = function (error: HttpError): Response {
     return new Response(error.status, 'text/plain', error.message)
   }
 
+  constructor (handler?: Handler, errorHandler?: ErrorHandler) {
+    if (handler) {
+      this.handler = handler
+    }
+    if (errorHandler) {
+      this.errorHandler = errorHandler
+    }
+  }
+
+  /** Starts the server. */
   async listen (port: number) {
     const server = serve({ port })
     console.log(`Application is listening on port ${port}...`)
     for await (const serverRequest of server) {
-      serverRequest.respond(await this.handle(serverRequest)).catch(() => {})
-    }
-  }
-
-  async handle (serverRequest: ServerRequest): Promise<Response> {
-    try {
-      const request = new Request(serverRequest)
-      const handler = this.find(request)
-      if (handler === null) {
-        const error = new HttpError(Status.NotFound, 'Page not found.')
-        return this.errorHandler(error)
-      }
-      return await handler(request)
-    } catch (error) {
-      if (this.env === 'dev') {
-        console.error(error)
-      }
-      if (error instanceof HttpError === false) {
-        error.status = 500
-      }
-      return this.errorHandler(error)
-    }
-  }
-
-  route (method: HttpMethod, pattern: string, handler: Handler) {
-    this.routes[method].unshift({
-      pattern: new RegExp(`^${pattern.replace(/\//g, '\/')}$`),
-      handler: handler
-    })
-  }
-
-  error (errorHandler: ErrorHandler) {
-    this.errorHandler = errorHandler
-  }
-
-  find (request: Request): Handler|null {
-    for (const route of this.routes[request.method]) {
-      if (request.path.match(route.pattern)) {
-        return route.handler
+      try {
+        const request = new Request(serverRequest)
+        serverRequest.respond(await this.handler(request))
+      } catch (error) {
+        if (error instanceof HttpError === false) {
+          error.status = 500
+        }
+        serverRequest.respond(await this.errorHandler(error))
       }
     }
-
-    return null
   }
 }
-
-/** Pipes n functions (intended for use in chaining functions to make a handler). */
-export function pipe (...fns: any): Handler {
-  return function (x: Request) {
-    fns.reduce((y: any, f: any) => f(y), x)
-  } as Handler
-}
-
-/** A record of routes grouped by HTTP method. */
-export type Routes = Record<HttpMethod, Route[]>
-
-/** A route. */
-export type Route = { pattern: RegExp, handler: Handler }
-
-/** A route handler. */
-export type Handler = (request: Request) => Response|Promise<Response>
-
-/** An error handler. */
-export type ErrorHandler = (error: HttpError) => Response|Promise<Response>
