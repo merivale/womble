@@ -18,7 +18,7 @@ const port = 3000
 womble.listen(port)
 ```
 
-## 2. More complex example
+## 2. A more complex example
 
 Womble doesn't come with a router, so your main application function will typically do the routing, and call whatever other functions you need to create and return the responses. E.g.:
 
@@ -45,7 +45,7 @@ function router (request: Request): Response {
 
 This might seem tedious if you're used to higher level frameworks that let you define your routes and then take care of the routing logic for you. Fair enough. Personally I find this lower level approach easier to read and test. Also I'm a bit obsessive and like having more fine-grained control.
 
-# 3. Asyncronous handlers
+## 3. Asyncronous handlers
 
 Your application can be asyncronous, should you want/need to `await` anything inside any of your handlers. For example, you can read files and serve them up like this:
 
