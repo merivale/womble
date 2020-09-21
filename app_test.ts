@@ -1,7 +1,4 @@
-import {
-  assert,
-  assertEquals
-} from './test_deps.ts'
+import { assert, assertEquals } from './test_deps.ts'
 import { Status } from './deps.ts'
 import { App } from './app.ts'
 import { HttpError } from './http_error.ts'

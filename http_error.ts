@@ -1,4 +1,4 @@
-import { Status } from './deps.ts'
+import type { Status } from './deps.ts'
 
 /** An HTTP Error object. */
 export class HttpError extends Error {
