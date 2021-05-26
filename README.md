@@ -7,10 +7,10 @@ A web application is essentially a function from HTTP requests to HTTP responses
 ## 1. Basic usage
 
 ```ts
-import { App, Request, Response, Status } from 'https://raw.githubusercontent.com/merivale/womble/v0.3.0/mod.ts'
+import { App, Request, Response, Status } from "https://raw.githubusercontent.com/merivale/womble/v0.3.0/mod.ts"
 
 function router (request: Request): Response {
-  return new Response(Status.OK, 'text/plain', `Womble is responding to the request for ${request.path}.`)
+  return new Response(Status.OK, "text/plain", `Womble is responding to the request for ${request.path}.`)
 }
 
 const womble = new App(router)
@@ -23,14 +23,14 @@ womble.listen(port)
 Womble doesn't come with a router, so your main application function will typically do the routing, and call whatever other functions you need to create and return the responses. E.g.:
 
 ```ts
-import * as handler from './handler.ts' // put your application logic here
+import * as handler from "./handler.ts" // put your application logic here
 
 function router (request: Request): Response {
   switch (request.path) {
-    case '/':
+    case "/":
       return handler.home()
 
-    case '/about':
+    case "/about":
       return handler.about()
   }
 
@@ -54,7 +54,7 @@ async function router (request: Request): Promise<Response> {
   switch (request.path) {
     ...
 
-    case '/favicon.ico':
+    case "/favicon.ico":
       return await favicon()
   }
 
@@ -62,8 +62,8 @@ async function router (request: Request): Promise<Response> {
 }
 
 async function favicon (request: Request): Promise<Response> {
-  const buffer = await Deno.readFile('favicon.ico')
-  return new Response(Status.OK, 'image/ico', buffer)
+  const buffer = await Deno.readFile("favicon.ico")
+  return new Response(Status.OK, "image/ico", buffer)
 }
 ```
 
@@ -76,15 +76,15 @@ You can customize this response by giving Womble your own `errorHandler` functio
 For example:
 
 ```ts
-import { HttpError, ... } from 'https://raw.githubusercontent.com/merivale/womble/v0.3.0/mod.ts'
+import { HttpError, ... } from "https://raw.githubusercontent.com/merivale/womble/v0.3.0/mod.ts"
 
 async function router (request: Request): Promise<Response> {
   switch (request.path) {
-    case '/':
-      return new Response(Status.OK, 'text/plain', 'This is the home page.')
+    case "/":
+      return new Response(Status.OK, "text/plain", "This is the home page.")
 
-    case '/about':
-      return new Response(Status.OK, 'text/plain', 'This is the about page.')
+    case "/about":
+      return new Response(Status.OK, "text/plain", "This is the about page.")
   }
 
   throw new HttpError(Status.NotFound, `No page found for ${request.path}.`)
@@ -92,7 +92,7 @@ async function router (request: Request): Promise<Response> {
 }
 
 function errorHandler (httpError: HttpError): Response {
-  return new Response(httpError.status, 'text/plain', `The following error occured: ${httpError.message}.`)
+  return new Response(httpError.status, "text/plain", `The following error occured: ${httpError.message}.`)
 }
 
 const womble = new App(router, errorHandler)
@@ -100,27 +100,29 @@ const womble = new App(router, errorHandler)
 
 ## 5. The `Request` object
 
-Deno's http library passes a `ServerRequest` object to your handlers. Womble converts this into a slightly different `Request` object. The differences are that Womble's `Request` object doesn't have the `respond` method (you should return your `Response` instead), and that it has just a few extra things to make life a bit easier. Namely, the `url` property is split (at the first `?`) into `path` (before the `?`) and `query` (after the `?`) properties. If there is no `?` in the URL, the `query` property will be `undefined`. If there is a `?`, you can also access the query as a `URLSearchParams` object, via the `searchParams` property.
+Deno's http library passes a `ServerRequest` object to your handlers. Womble converts this into a slightly different `Request` object. The differences are that Womble's `Request` object doesn't have the `respond` method (you should return your `Response` instead), and that it has just a few extra things to make life a bit easier:
 
-Finally, there are three asynchronous functions added for reading the body of a request: `getTextBody`, `getFormBody`, and `getJsonBody`. The first returns the body (if any) as text, the second returns the body as a `URLSearchParams` object, and the third parses the body as JSON, and returns the resulting object. `getFormBody` and `getJsonBody` take an optional `validate` argument (which defaults to `false`); if set to `true`, these functions will throw a `Status.BadRequest` error if the body cannot be parsed appropriately.
+  - The `url` property is split (at the first `?`) into `path` (before the `?`) and `query` (after the `?`) properties. If there is no `?` in the URL, the `query` property will be `undefined`. If there is a `?`, you can also access the query as a `URLSearchParams` object, via the `searchParams` property.
+  - Request cookies are parsed and placed in a `cookies` property.
+  - The body of the request is read in advance and made available (as a string) in the `body` property.
 
 For use in testing your applications, Womble also provides a function for creating your own requests. Feed it a method, a url, and an optional `options` object. The latter can contain a request body (as a string) and some headers.
 
 ## 6. The `Response` object
 
-The `Response` object simply consists of a `Status`, some `Headers`, and an optional `body` (either a string or a `Uint8Array`). Construct it with a status, a content type, and a body:
+The `Response` object consists of a `Status`, some `Headers`, and an optional `body` (either a string or a `Uint8Array`). Construct it with a status, a content type, and a body:
 
 ```ts
-const reponse = new Response(Status.OK, 'text/plain', 'This is the body of the response')
+const reponse = new Response(Status.OK, "text/plain", "This is the body of the response")
 ```
 
 You can then modify the headers with `response.headers.set(key, value)`.
 
-Womble also gives you a few extensions of the basic response to speed things up: `OkResponse`, `HtmlResponse`, `JavascriptResponse`, and `JsonResponse`. The first only takes a content type and body in its constructor (and sets the status to `Status.OK`). The other three set the status to OK and also set the content type appropriately, so you only need to pass the body.
+Womble also gives you a few extensions of the basic response to speed things up: `OkResponse`, `HtmlResponse`, `JavascriptResponse`, and `JsonResponse`. The first only takes headers and a body in its constructor (and sets the status to `Status.OK`). The other three set the status to OK and also set the content type appropriately, so you only need to pass the body.
 
 ## 7. How do I use Womble in production?
 
-Up to you, but in case you don't know about these things, I recommend using NGINX on a Linux server. Set up a reverse proxy in NGINX to pass requests on to whatever port you configured your app to listen on (Google can tell you how to do this). Then use `systemctl` to start the app as a service. I.e. create a `my-web-app.service` file in `/etc/systemd/system/` with the following content:
+An example using NGINX on a Linux server: Set up a reverse proxy in NGINX to pass requests on to whatever port you configured your app to listen on (Google can tell you how to do this). Then use `systemctl` to start the app as a service. I.e. create a `my-web-app.service` file in `/etc/systemd/system/` with the following content:
 
 ```
 [Unit]

@@ -1,13 +1,22 @@
+export type {
+  Cookie
+} from "https://deno.land/std@0.97.0/http/mod.ts"
+
 export {
+  deleteCookie,
+  getCookies,
+  setCookie,
   serve,
   ServerRequest,
   Status
-} from 'https://deno.land/std@v0.70.0/http/mod.ts'
+} from "https://deno.land/std@0.97.0/http/mod.ts"
 
 export {
-  BufReader
-} from 'https://deno.land/std@v0.70.0/io/bufio.ts'
+  Buffer,
+  BufReader,
+  readAll
+} from "https://deno.land/std@0.97.0/io/mod.ts"
 
 export {
-  encode
-} from 'https://deno.land/std@v0.70.0/encoding/utf8.ts'
+  extname
+} from "https://deno.land/std@0.97.0/path/mod.ts"

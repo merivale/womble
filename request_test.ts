@@ -1,41 +1,42 @@
-import { BufReader, ServerRequest, encode } from './deps.ts'
-import { assert, assertEquals } from './test_deps.ts'
-import { mockRequest, Request } from './request.ts'
+import { ServerRequest } from "./deps.ts"
+import { assert, assertEquals } from "./test_deps.ts"
+import { Method, MockRequest, Request } from "./request.ts"
 
 Deno.test({
-  name: 'Request',
-  async fn() {
-    const buffer = new Deno.Buffer(encode('Hello'))
+  name: "Request",
+  fn() {
+    const body = "Hello"
     const serverRequest = new ServerRequest()
-    serverRequest.r = new BufReader(buffer)
-    serverRequest.method = 'GET'
-    serverRequest.url = 'test?x=foo&y=bar&z=baz'
+    serverRequest.method = "GET"
+    serverRequest.url = "test?x=foo&y=bar&z=baz"
     serverRequest.headers = new Headers()
-    serverRequest.headers.set('content-length', '5')
-    const request = new Request(serverRequest)
+    serverRequest.headers.set("content-length", "5")
+    const request = new Request(serverRequest, body)
     assert(request instanceof Request)
-    assertEquals(request.method, 'GET')
-    assertEquals(request.path, '/test')
-    assertEquals(request.query, 'x=foo&y=bar&z=baz')
-    assertEquals(request.searchParams.get('x'), 'foo')
-    assertEquals(request.searchParams.get('y'), 'bar')
-    assertEquals(request.searchParams.get('z'), 'baz')
-    assertEquals(await request.getTextBody(), 'Hello')
+    assertEquals(request.method, Method.GET)
+    assertEquals(request.path, "/test")
+    assertEquals(request.query, "x=foo&y=bar&z=baz")
+    assertEquals(request.searchParams.get("x"), "foo")
+    assertEquals(request.searchParams.get("y"), "bar")
+    assertEquals(request.searchParams.get("z"), "baz")
+    assertEquals(request.body, "Hello")
   }
 })
 
 Deno.test({
-  name: 'Mock Request',
-  async fn() {
-    const options = { headers: { 'content-type': 'text/plain' }, body: 'Hello' }
-    const request = mockRequest('GET', 'test?x=foo&y=bar&z=baz', options)
+  name: "Mock Request",
+  fn() {
+    const body = "Hello"
+    const headers = { "content-type": "text/plain" }
+    const request = new MockRequest(Method.GET, "test?x=foo&y=bar&z=baz", body, headers)
+    assert(request instanceof MockRequest)
     assert(request instanceof Request)
-    assertEquals(request.method, 'GET')
-    assertEquals(request.path, '/test')
-    assertEquals(request.query, 'x=foo&y=bar&z=baz')
-    assertEquals(request.searchParams.get('x'), 'foo')
-    assertEquals(request.searchParams.get('y'), 'bar')
-    assertEquals(request.searchParams.get('z'), 'baz')
-    assertEquals(await request.getTextBody(), 'Hello')
+    assertEquals(request.method, Method.GET)
+    assertEquals(request.path, "/test")
+    assertEquals(request.query, "x=foo&y=bar&z=baz")
+    assertEquals(request.searchParams.get("x"), "foo")
+    assertEquals(request.searchParams.get("y"), "bar")
+    assertEquals(request.searchParams.get("z"), "baz")
+    assertEquals(request.body, "Hello")
   }
 })
