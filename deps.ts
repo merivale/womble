@@ -1,6 +1,6 @@
 export type {
   Cookie
-} from "https://deno.land/std@0.97.0/http/mod.ts"
+} from "https://deno.land/std@0.100.0/http/mod.ts"
 
 export {
   deleteCookie,
@@ -9,14 +9,14 @@ export {
   serve,
   ServerRequest,
   Status
-} from "https://deno.land/std@0.97.0/http/mod.ts"
+} from "https://deno.land/std@0.100.0/http/mod.ts"
 
 export {
   Buffer,
   BufReader,
   readAll
-} from "https://deno.land/std@0.97.0/io/mod.ts"
+} from "https://deno.land/std@0.100.0/io/mod.ts"
 
 export {
   extname
-} from "https://deno.land/std@0.97.0/path/mod.ts"
+} from "https://deno.land/std@0.100.0/path/mod.ts"
