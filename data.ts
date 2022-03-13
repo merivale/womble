@@ -1,4 +1,4 @@
-import { Status, dirname, ensureDir, exists, v4 } from './deps.ts'
+import { Status, dirname, ensureDir, v4 } from './deps.ts'
 import { ContentType, headers } from './headers.ts'
 import HttpError from './http_error.ts'
 
@@ -41,13 +41,13 @@ export default async (path: string, request: Request): Promise<Response> => {
 const createObject = async (objectType: string, payload: string): Promise<Response> => {
   try {
     const object = JSON.parse(payload)
-    object.id = v4.generate()
+    object.id = globalThis.crypto.randomUUID()
     const path = objectPath(objectType, object.id)
     const json = JSON.stringify(object)
     await ensureDir(dirname(path))
     await Deno.writeTextFile(path, json)
     return new Response(json, { status: Status.OK, headers: headers(ContentType.JSON) })
-  } catch (_) {
+  } catch {
     throw new HttpError(Status.BadRequest, 'Invalid JSON.')
   }
 }
@@ -55,11 +55,12 @@ const createObject = async (objectType: string, payload: string): Promise<Respon
 /** Handles a GET (read) API data request. */
 const readObject = async (objectType: string, objectId: string): Promise<Response> => {
   const path = objectPath(objectType, objectId)
-  if (await exists(path)) {
+  try {
     const json = await Deno.readTextFile(path)
     return new Response(json, { status: Status.OK, headers: headers(ContentType.JSON) })
+  } catch {
+    throw new HttpError(Status.NotFound, 'Object not found.')
   }
-  throw new HttpError(Status.NotFound, 'Object not found.')
 }
 
 /** Handles a PUT (update) API data request. */
@@ -68,7 +69,7 @@ const updateObject = async (objectType: string, objectId: string, payload: strin
   try {
     const newData = JSON.parse(payload)
     const path = objectPath(objectType, objectId)
-    if (await exists(path)) {
+    try {
       const object = JSON.parse(await Deno.readTextFile(path))
       for (const key of Object.keys(newData)) {
         object[key] = newData[key]
@@ -76,9 +77,10 @@ const updateObject = async (objectType: string, objectId: string, payload: strin
       const json = JSON.stringify(object)
       await Deno.writeTextFile(path, json)
       return new Response(json, { status: Status.OK, headers: headers(ContentType.JSON) })
+    } catch {
+      throw new HttpError(Status.NotFound, 'Object not found.')
     }
-    throw new HttpError(Status.NotFound, 'Object not found.')
-  } catch (_) {
+  } catch {
     throw new HttpError(Status.BadRequest, 'Invalid JSON.')
   }
 }
@@ -86,11 +88,12 @@ const updateObject = async (objectType: string, objectId: string, payload: strin
 /** Handles a DELETE (delete) API data request. */
 const deleteObject = async (objectType: string, objectId: string): Promise<Response> => {
   const path = objectPath(objectType, objectId)
-  if (await exists(path)) {
+  try {
     await Deno.remove(path)
     return new Response('Object deleted.', { status: Status.OK, headers: headers(ContentType.JSON) })
+  } catch {
+    throw new HttpError(Status.NotFound, 'Object not found.')
   }
-  throw new HttpError(Status.NotFound, 'Object not found.')
 }
 
 /** Gets the path of a data object. */

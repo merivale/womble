@@ -1,4 +1,4 @@
-import { Status, dirname, ensureDir, exists, getCookies, v4 } from './deps.ts'
+import { Status, dirname, ensureDir, getCookies, v4 } from './deps.ts'
 import { ContentType, headers, headersWithSetCookie, headersWithUnsetCookie } from './headers.ts'
 import HttpError from './http_error.ts'
 
@@ -46,7 +46,7 @@ const createUser = async (payload: string): Promise<Response> => {
     await ensureDir(dirname(path))
     await Deno.writeTextFile(path, json)
     return new Response(JSON.stringify({ 'success': 'User created.' }), { status: Status.OK, headers: headers(ContentType.JSON) })
-  } catch (_) {
+  } catch {
     throw new HttpError(Status.BadRequest, 'Invalid JSON.')
   }
 }
@@ -54,11 +54,12 @@ const createUser = async (payload: string): Promise<Response> => {
 /** Handles a delete user request. */
 const deleteUser = async (username: string): Promise<Response> => {
   const path = userPath(username)
-  if (await exists(path)) {
+  try {
     await Deno.remove(path)
     return new Response(JSON.stringify({ 'success': 'User deleted.' }), { status: Status.OK, headers: headers(ContentType.JSON) })
+  } catch {
+    throw new HttpError(Status.NotFound, 'Object not found.')
   }
-  throw new HttpError(Status.NotFound, 'Object not found.')
 }
 
 /** Handles a login request. */
@@ -66,7 +67,7 @@ const login = async (payload: string): Promise<Response> => {
   try {
     const { username, password } = JSON.parse(payload)
     const path = userPath(username)
-    if (await exists(path)) {
+    try {
       const storedPassword = await Deno.readTextFile(path)
       if (storedPassword === password) {
         const sessionId = v4.generate()
@@ -79,10 +80,10 @@ const login = async (payload: string): Promise<Response> => {
         return new Response(JSON.stringify({ 'success': 'Logged in.' }), { status: Status.OK, headers: headersWithSetCookie(cookie, ContentType.JSON) })
       }
       throw new HttpError(Status.OK, 'Incorrect password.')
-    } else {
+    } catch {
       throw new HttpError(Status.OK, 'Username not found.')
     }
-  } catch (_) {
+  } catch {
     throw new HttpError(Status.BadRequest, 'Invalid JSON.')
   }
 }
@@ -91,9 +92,9 @@ const login = async (payload: string): Promise<Response> => {
 const logout = async (cookies: Record<string, string>): Promise<Response> => {
   const sessionId = cookies['session_id']
   const path = sessionPath(sessionId)
-  if (await exists(path)) {
+  try {
     await Deno.remove(path)
-  }
+  } catch {}
   return new Response(JSON.stringify({ 'success': 'Logged out.' }), { status: Status.OK, headers: headersWithUnsetCookie('session_id', ContentType.JSON) })
 }
 
